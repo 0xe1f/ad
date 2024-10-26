@@ -15,8 +15,6 @@
 #ifndef SPRITE_H
 #define SPRITE_H
 
-#include "screen.h"
-
 struct Sprite {
     unsigned char *bitmap;
     int width;
@@ -33,11 +31,5 @@ inline int sprite_frame_count(const struct Sprite *sprite) {
 }
 
 void sprite_animate(struct Sprite *sprite);
-void sprite_draw(
-    const struct Sprite *sprite,
-    const struct Screen *screen,
-    int x,
-    int y
-);
 
 #endif // SPRITE_H
