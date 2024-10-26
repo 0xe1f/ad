@@ -9,8 +9,8 @@ LDFLAGS=-L$(RGBS_LIBDIR) -lm -lrgbserver
 
 all: $(EXE)
 
-$(EXE): $(EXE).o
-	$(CC) $< -o $@ $(LDFLAGS)
+$(EXE): $(EXE).o screen.o sprite.o
+	$(CC) $^ -o $@ $(LDFLAGS)
 
 %.o : %.c
 	$(CC) -I$(INCLUDE) $(CFLAGS) -c -o $@ $<

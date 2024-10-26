@@ -33,32 +33,3 @@ void sprite_animate(
         }
     }
 }
-
-void sprite_draw(
-    const struct Sprite *sprite,
-    const struct Screen *screen,
-    int x,
-    int y
-) {
-    if (
-        x >= screen->width 
-            || y >= screen->height
-            || x + sprite->frame_width < 0
-            || y + sprite->height < 0
-    ) {
-        return;
-    }
-
-    unsigned char *out = screen->buffer;
-    unsigned char *in = sprite->bitmap;
-    int i;
-    int vcopy = sprite->height;
-    for (i = 0; i < sprite->height; i++) {
-        unsigned char *in_start = in + sprite->frame_width * sprite->frame * sprite->bpp;
-        unsigned char *out_start = out;
-        int hcopy = sprite->frame_width * sprite->bpp;
-        memcpy(out_start, in_start, hcopy);
-        out += screen->width * screen->bpp;
-        in += sprite->width * sprite->bpp;
-    }
-}

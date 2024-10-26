@@ -15,6 +15,8 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
+#include "sprite.h"
+
 struct Screen {
     unsigned char *buffer;
     int buffer_size;
@@ -30,5 +32,15 @@ int screen_create(
     int bpp
 );
 void screen_destroy(struct Screen *screen);
+
+void screen_clear(
+    const struct Screen *screen
+);
+void screen_draw_sprite(
+    const struct Screen *screen,
+    const struct Sprite *sprite,
+    int x,
+    int y
+);
 
 #endif // SCREEN_H

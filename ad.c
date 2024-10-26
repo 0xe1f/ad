@@ -22,31 +22,19 @@
 #include <signal.h>
 #include <string.h>
 
+#include "screen.h"
+#include "sprite.h"
+
+struct Screen screen = {};
+
 volatile int interrupt_received = 0;
-static unsigned char *buffer = NULL;
-static const int screen_width = 320;
-static const int screen_height = 256;
-static const int bpp = 2;
-static int buffer_size = screen_width * screen_height * bpp;
 
-struct Sprite {
-    unsigned char *bitmap;
-    unsigned int width;
-    unsigned int height;
-    unsigned int bpp;
-    unsigned int frame_width;
-    unsigned int frame;
-    unsigned int reverse_anim;
-    unsigned int anim_dir;
-};
-
-#define SYNC_ANIM_DELAY ((long long)((0.1)*1000000.0))
+#define SYNC_ANIM_DELAY ((long long)((0.05)*1000000.0))
 
 static void InterruptHandler(int signo) {
     interrupt_received = 1;
     rgbs_end();
-    free(buffer);
-    buffer = NULL;
+    screen_destroy(&screen);
 }
 
 unsigned short toaster_bmp[] = {
@@ -314,65 +302,17 @@ long long millis() {
     return (tv.tv_sec) * 1000LL+(tv.tv_usec) / 1000LL;
 }
 
-inline int frame_count(const struct Sprite *sprite) {
-    return sprite->width / sprite->frame_width;
-}
-
-void animate(struct Sprite *sprite) {
-    sprite->frame += sprite->anim_dir;
-    int fc = frame_count(sprite);
-    if (sprite->reverse_anim) {
-        if (sprite->frame >= (fc - 1) || sprite->frame <= 0) {
-            sprite->anim_dir *= -1;
-        }
-    } else {
-        if (sprite->frame >= fc) {
-            sprite->frame = 0;
-        } else if (sprite->frame < 0) {
-            sprite->frame = fc - 1;
-        }
-    }
-}
-
-void draw_sprite(
-    const struct Sprite *sprite,
-    int x,
-    int y
-) {
-    if (
-        x >= screen_width 
-            || y >= screen_height
-            || x + sprite->frame_width < 0
-            || y + sprite->height < 0
-    ) {
-        return;
-    }
-
-    unsigned char *out = buffer;
-    unsigned char *in = sprite->bitmap;
-    int i;
-    int vcopy = sprite->height;
-    for (i = 0; i < sprite->height; i++) {
-        unsigned char *in_start = in + sprite->frame_width * sprite->frame * bpp;
-        unsigned char *out_start = out;
-        int hcopy = sprite->frame_width * sprite->bpp;
-        memcpy(out_start, in_start, hcopy);
-        out += screen_width * bpp;
-        in += sprite->width * sprite->bpp;
-    }
-}
-
 int main(int argc, char **argv) {
-    if ((buffer = (unsigned char *)malloc(buffer_size)) == NULL) {
-        fprintf(stderr, "malloc() failed\n");
+    if (!screen_create(&screen, 320, 240, 2)) {
+        fprintf(stderr, "screen_create() failed\n");
         return 1;
     }
 
     struct FrameGeometry data = {
-        buffer_size,
-        screen_width * bpp,
-        screen_width,
-        screen_height,
+        screen.buffer_size,
+        screen.width * screen.bpp,
+        screen.width,
+        screen.height,
         PIXEL_FORMAT_RGB565,
         0,
         MAGIC_NUMBER
@@ -398,19 +338,25 @@ int main(int argc, char **argv) {
         1    // anim_dir
     };
 
-    int x = 160-32;
-    int y = 128-32;
+    int x = 320;
+    int y = -64;
     while (!interrupt_received) {
         long long tick = millis();
         usleep(SYNC_ANIM_DELAY);
-        animate(&toaster);
-        draw_sprite(&toaster, x++, y);
+        sprite_animate(&toaster);
+        x--;
+        y++;
+        if (x < 64 && y > 256) {
+            x = 320;
+            y = -64;
+        }
+        screen_clear(&screen);
+        screen_draw_sprite(&screen, &toaster, x, y);
         rgbs_poll();
-        rgbs_send(buffer, buffer_size);
+        rgbs_send(screen.buffer, screen.buffer_size);
     }
 
-    free(buffer);
-    buffer = NULL;
+    screen_destroy(&screen);
 
     return 0;
 }

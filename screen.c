@@ -18,6 +18,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX(a, b) ((a)>(b)?(a):(b))
+#define MIN(a, b) ((a)<(b)?(a):(b))
+
 int screen_create(
     struct Screen *screen,
     int width,
@@ -49,5 +52,61 @@ void screen_destroy(
     if (screen->buffer) {
         free(screen->buffer);
         screen->buffer = NULL;
+    }
+}
+
+void screen_clear(
+    const struct Screen *screen
+) {
+    memset(screen->buffer, 0, screen->buffer_size);
+}
+
+void screen_draw_sprite(
+    const struct Screen *screen,
+    const struct Sprite *sprite,
+    int x,
+    int y
+) {
+    if (
+        x >= screen->width 
+            || y >= screen->height
+            || x + sprite->frame_width < 0
+            || y + sprite->height < 0
+    ) {
+        // Nothing visible
+        return;
+    }
+
+    // FIXME: This logic falls apart if sprite/screen bpp do not match
+
+    int vcopy = sprite->height;
+    int vread = 0;
+    int vwrite = y;
+    if (y + sprite->height >= screen->height) {
+        vcopy = screen->height - y;
+    } else if (y < 0) {
+        vread = -y;
+        vwrite = 0;
+        vcopy += y;
+    }
+    unsigned char *in_row = sprite->bitmap + vread * sprite->width * sprite->bpp;
+    unsigned char *out_row = screen->buffer + vwrite * screen->width * screen->bpp;
+    int i;
+    for (i = 0; i < vcopy; i++) {
+        int hcopy = sprite->frame_width;
+        int hread = 0;
+        int hwrite = x;
+        if (x + sprite->frame_width >= screen->width) {
+            hcopy = screen->width - x;
+        } else if (x < 0) {
+            hread = -x;
+            hwrite = 0;
+            hcopy += x;
+        }
+        unsigned char *in_col = in_row + (sprite->frame_width * sprite->frame + hread) * sprite->bpp;
+        unsigned char *out_col = out_row + hwrite * sprite->bpp;
+        memcpy(out_col, in_col, hcopy * sprite->bpp);
+        out_row += screen->width * screen->bpp;
+        in_row += sprite->width * sprite->bpp;
     }
 }
