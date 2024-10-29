@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Akop Karapetyan
+// Copyright (c) 2024 Akop Karapetyan
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,12 +61,31 @@ void screen_clear(
     memset(screen->buffer, 0, screen->buffer_size);
 }
 
+inline void bitblt_noop(
+    unsigned char *dest,
+    const unsigned char *src,
+    int len
+) {
+}
+
+inline void bitblt_rgba5551(
+    unsigned char *dest,
+    const unsigned char *src,
+    int len
+) {
+    for (unsigned char *end = dest + len; dest < end; dest++, src++) {
+        if (*src) {
+            *dest = *src;
+        }
+    }
+}
+
 void screen_draw_sprite(
     const struct Screen *screen,
-    const struct Sprite *sprite,
-    int x,
-    int y
+    const struct Sprite *sprite
 ) {
+    int x = sprite->x;
+    int y = sprite->y;
     if (
         x >= screen->width 
             || y >= screen->height
@@ -92,6 +111,12 @@ void screen_draw_sprite(
     unsigned char *in_row = sprite->bitmap + vread * sprite->width * sprite->bpp;
     unsigned char *out_row = screen->buffer + vwrite * screen->width * screen->bpp;
     int i;
+    void (*bitblt)(unsigned char *, const unsigned char *, int);
+    if (sprite->format == FORMAT_RGBA5551) {
+        bitblt = bitblt_rgba5551;
+    } else {
+        bitblt_noop;
+    }
     for (i = 0; i < vcopy; i++) {
         int hcopy = sprite->frame_width;
         int hread = 0;
@@ -105,7 +130,7 @@ void screen_draw_sprite(
         }
         unsigned char *in_col = in_row + (sprite->frame_width * sprite->frame + hread) * sprite->bpp;
         unsigned char *out_col = out_row + hwrite * sprite->bpp;
-        memcpy(out_col, in_col, hcopy * sprite->bpp);
+        bitblt(out_col, in_col, hcopy * sprite->bpp);
         out_row += screen->width * screen->bpp;
         in_row += sprite->width * sprite->bpp;
     }

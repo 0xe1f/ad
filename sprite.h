@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Akop Karapetyan
+// Copyright (c) 2024 Akop Karapetyan
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,19 +17,22 @@
 
 struct Sprite {
     unsigned char *bitmap;
-    int width;
-    int height;
-    int bpp;
-    int frame_width;
-    int frame;
-    int reverse_anim;
-    int anim_dir;
+    unsigned char type;
+    unsigned short width;
+    unsigned short height;
+    unsigned char bpp;
+    unsigned char frame_width;
+    unsigned char frame;
+    signed char anim_dir;
+    signed short x;
+    signed short y;
+    unsigned char format;
 };
+
+#define FORMAT_RGBA5551 1
 
 inline int sprite_frame_count(const struct Sprite *sprite) {
     return sprite->width / sprite->frame_width;
 }
-
-void sprite_animate(struct Sprite *sprite);
 
 #endif // SPRITE_H

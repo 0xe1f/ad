@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Akop Karapetyan
+// Copyright (c) 2024 Akop Karapetyan
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,9 +38,7 @@ void screen_clear(
 );
 void screen_draw_sprite(
     const struct Screen *screen,
-    const struct Sprite *sprite,
-    int x,
-    int y
+    const struct Sprite *sprite
 );
 
 #endif // SCREEN_H
