@@ -61,14 +61,14 @@ void screen_clear(
     memset(screen->buffer, 0, screen->buffer_size);
 }
 
-inline void bitblt_noop(
+void bitblt_noop(
     unsigned char *dest,
     const unsigned char *src,
     int len
 ) {
 }
 
-inline void bitblt_rgba5551(
+void bitblt_rgba5551(
     unsigned char *dest,
     const unsigned char *src,
     int len
@@ -110,13 +110,14 @@ void screen_draw_sprite(
     }
     unsigned char *in_row = sprite->bitmap + vread * sprite->width * sprite->bpp;
     unsigned char *out_row = screen->buffer + vwrite * screen->width * screen->bpp;
-    int i;
+
     void (*bitblt)(unsigned char *, const unsigned char *, int);
     if (sprite->format == FORMAT_RGBA5551) {
         bitblt = bitblt_rgba5551;
     } else {
-        bitblt_noop;
+        bitblt = bitblt_noop;
     }
+    int i;
     for (i = 0; i < vcopy; i++) {
         int hcopy = sprite->frame_width;
         int hread = 0;

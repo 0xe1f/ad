@@ -44,6 +44,8 @@ struct SpriteDef {
     unsigned char type;
     signed short x;
     signed short y;
+    float velocity;
+    unsigned short edge_drift;
 };
 
 static void InterruptHandler(int signo) {
@@ -84,6 +86,8 @@ void sprite_init(
         return;
     }
 
+    sprite->velocity = def->velocity;
+    sprite->delta = 0;
     sprite->bpp = 2;
     sprite->x = def->x;
     sprite->y = def->y;
@@ -94,6 +98,7 @@ void sprite_init(
 void sprite_animate(
     struct Sprite *sprite
 ) {
+    sprite->delta++;
     int frame = sprite->frame;
     if (sprite->type == SPRITE_TOASTER) {
         frame += sprite->anim_dir;
@@ -108,6 +113,12 @@ void sprite_animate(
         || sprite->type == SPRITE_TOAST_3
     ) {
     }
+
+    if (sprite->delta % (int)(1.0f / sprite->velocity) == 0) {
+        sprite->x--;
+        sprite->y++;
+    }
+
     sprite->frame = frame;
 }
 
@@ -137,17 +148,27 @@ int main(int argc, char **argv) {
     signal(SIGINT, InterruptHandler);
 
     struct SpriteDef defaults[] = {
-        { SPRITE_TOASTER, 320, -64 },
-        { SPRITE_TOAST_0, 240, -80 },
-        { SPRITE_TOASTER, 160, -128 },
-        { SPRITE_TOAST_1, 80, -64 },
-    };
-    const int kount = 4;
+        { SPRITE_TOAST_0, 64, -64, .8, 0 },
+        { SPRITE_TOAST_1, 128, -64, .5, 64 },
 
-    struct Sprite sprites[kount];
-    int s;
-    for (s = 0; s < kount; s++) {
-        sprite_init(&sprites[s], &defaults[s]);
+        { SPRITE_TOAST_2, 320, 0, 1, 64 },
+        { SPRITE_TOAST_3, 320, 64, .9, 0 },
+
+        { SPRITE_TOASTER, 192, -64, .3, 100 },
+        { SPRITE_TOASTER, 256, -64, .9, 128 },
+
+        { SPRITE_TOASTER, 320, 128, .7, 128 },
+        { SPRITE_TOASTER, 320, 192, 1, 200 },
+        { 0, 0, 0, 0, 0 },
+    };
+    int count = 0;
+    const struct SpriteDef *def;
+    for (def = defaults; def->type; def++, count++);
+
+    struct Sprite *sprites = malloc(count * sizeof(struct Sprite));
+    struct Sprite *sprite;
+    for (sprite = sprites, def = defaults; def->type; sprite++, def++) {
+        sprite_init(sprite, def);
     }
 
     while (!interrupt_received) {
@@ -156,16 +177,10 @@ int main(int argc, char **argv) {
 
         screen_clear(&screen);
 
-        for (s = 0; s < kount; s++) {
-            struct Sprite *sprite = &sprites[s];
+        for (sprite = sprites, def = defaults; def->type; sprite++, def++) {
             sprite_animate(sprite);
-            sprite->x--;
-            sprite->y++;
-
-            if (sprite->x < 64 && sprite->y > 256) {
-                struct SpriteDef *def = &defaults[s];
-                sprite->x = def->x;
-                sprite->y = def->y;
+            if (sprite->x - sprite->frame_width <= -def->edge_drift && screen.height - sprite->y <= -def->edge_drift) {
+                sprite_init(sprite, def);
             }
             screen_draw_sprite(&screen, sprite);
         }
@@ -174,6 +189,7 @@ int main(int argc, char **argv) {
         rgbs_send(screen.buffer, screen.buffer_size);
     }
 
+    free(sprites);
     screen_destroy(&screen);
 
     return 0;

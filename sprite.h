@@ -27,6 +27,8 @@ struct Sprite {
     signed short x;
     signed short y;
     unsigned char format;
+    float velocity;
+    short delta;
 };
 
 #define FORMAT_RGBA5551 1
