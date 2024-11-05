@@ -148,17 +148,17 @@ int main(int argc, char **argv) {
     signal(SIGINT, InterruptHandler);
 
     struct SpriteDef defaults[] = {
-        { SPRITE_TOAST_0, 64, -64, .8, 0 },
-        { SPRITE_TOAST_1, 128, -64, .5, 64 },
+        { SPRITE_TOAST_0, 448, -64, .8f, 0 },
+        { SPRITE_TOAST_1, 384, -128, .5f, 64 },
 
-        { SPRITE_TOAST_2, 320, 0, 1, 64 },
-        { SPRITE_TOAST_3, 320, 64, .9, 0 },
+        { SPRITE_TOAST_2, 128, -256, .5f, 64 },
+        { SPRITE_TOAST_3, 256, -128, .9f, 128 },
 
-        { SPRITE_TOASTER, 192, -64, .3, 100 },
-        { SPRITE_TOASTER, 256, -64, .9, 128 },
+        { SPRITE_TOASTER, 128, -256, .3f, 0 },
+        { SPRITE_TOASTER, 192, -192, .9f, 0 },
 
-        { SPRITE_TOASTER, 320, 128, .7, 128 },
-        { SPRITE_TOASTER, 320, 192, 1, 200 },
+        { SPRITE_TOASTER, 256, -128, .7f, 0 },
+        { SPRITE_TOASTER, 320, -64, 1.0f, 0 },
         { 0, 0, 0, 0, 0 },
     };
     int count = 0;
